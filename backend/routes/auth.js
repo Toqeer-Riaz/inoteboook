@@ -2,10 +2,12 @@ const express = require('express');
 const User = require('../models/User');
 var bcrypt = require('bcryptjs');
 const router = express.Router();
+const fetchuser = require('../middleware/fetchuser');
 const { body, validationResult } = require('express-validator');
 var jwt = require('jsonwebtoken');
+
 //string to sign token.
-const jwtstring="jsonwebtoken";
+const jwtstring="jsonweb";
 
 
 // 1:Create a User using: POST "/api/auth/createuser". No login required.
@@ -23,7 +25,7 @@ router.post('/createuser', [
     try {
       let user = await User.findOne({ email: req.body.email });
       if (user) {
-        return res.status(400).json({ error: "please try with correct email or password" })
+        return res.status(400).json({ error: "please try using unqiue email..." })
       }
       const salt = await bcrypt.genSalt(10);
       const hash = await bcrypt.hash(req.body.password, salt);
@@ -82,6 +84,20 @@ router.post('/login', [
   }catch (error) {
     console.error(error.message);
     res.status(500).send("Some Error occured");
+  }
+})
+
+
+// ROUTE 3: Get loggedin User Details using: POST "/api/auth/getuser". Login required
+router.post('/getuser', fetchuser,  async (req, res) => {
+
+  try {
+    const userId = req.user.id;
+    const user = await User.findById(userId).select("-password")
+    res.send(user)
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).send("Internal Server Error");
   }
 })
   module.exports = router 
